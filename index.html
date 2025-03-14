@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JS Maze Solver</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    #instructions {
+      font-family: Arial, sans-serif;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Maze Solver</h2>
+  <p id="instructions">Load an image, then click on the canvas to select the start point (green) and then the end point (blue).</p>
+  <input type="file" id="fileInput" accept="image/*">
+  <br>
+  <canvas id="mazeCanvas"></canvas>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const canvas = document.getElementById("mazeCanvas");
+    const ctx = canvas.getContext("2d");
+    const instructions = document.getElementById("instructions");
+
+    // Adjust threshold (0-255) for converting grayscale to binary.
+    const threshold = 128;
+    let grid = [];
+    let startPoint = null;
+    let endPoint = null;
+    let imageData;
+
+    fileInput.addEventListener("change", handleFile);
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        // Process the image after drawing.
+        processImage();
+        // Set up canvas click listener to pick start and end.
+        setupClicks();
+      };
+      img.src = URL.createObjectURL(file);
+    }
+
+    function processImage() {
+      const { width, height } = canvas;
+      imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+
+      // Create a 2D binary map (true for open/path, false for wall).
+      grid = [];
+      for (let y = 0; y < height; y++) {
+        grid[y] = [];
+        for (let x = 0; x < width; x++) {
+          const index = (y * width + x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const gray = (r + g + b) / 3;
+          grid[y][x] = (gray > threshold); // true means white/open, false means black/wall.
+        }
+      }
+    }
+
+    function setupClicks() {
+      startPoint = null;
+      endPoint = null;
+      instructions.textContent = "Click on the canvas to select the START point (green).";
+      
+      canvas.addEventListener("click", onCanvasClick);
+    }
+
+    function onCanvasClick(event) {
+      const rect = canvas.getBoundingClientRect();
+      // Calculate click coordinates relative to canvas.
+      const x = Math.floor(event.clientX - rect.left);
+      const y = Math.floor(event.clientY - rect.top);
+
+      // Check if the selected pixel is open.
+      if (!grid[y][x]) {
+        alert("Selected point is a wall. Please select an open path.");
+        return;
+      }
+
+      if (!startPoint) {
+        startPoint = { x, y };
+        drawMarker(startPoint, "green");  // Mark start with green.
+        instructions.textContent = "Click on the canvas to select the END point (blue).";
+      } else if (!endPoint) {
+        endPoint = { x, y };
+        drawMarker(endPoint, "blue");  // Mark end with blue.
+        canvas.removeEventListener("click", onCanvasClick);
+        // Run BFS and draw the path.
+        solveMaze();
+      }
+    }
+
+    // Draw a circular marker on the canvas.
+    function drawMarker(point, color) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function solveMaze() {
+      const prev = bfs(grid, startPoint, endPoint);
+      if (!prev) {
+        alert("No path found!");
+        return;
+      }
+      // Reconstruct the path from end to start.
+      let path = [];
+      for (let at = endPoint; at != null; at = prev[at.y][at.x]) {
+        path.push(at);
+      }
+      path.reverse();
+      drawPath(path);
+    }
+
+    // Breadth-first search to compute the shortest path.
+    function bfs(grid, start, end) {
+      const height = grid.length;
+      const width = grid[0].length;
+      const queue = [];
+      const prev = Array.from({ length: height }, () => Array(width).fill(null));
+      const visited = Array.from({ length: height }, () => Array(width).fill(false));
+
+      queue.push(start);
+      visited[start.y][start.x] = true;
+
+      // Directions: up, right, down, left.
+      const dirs = [
+        { dx: 0, dy: -1 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 }
+      ];
+
+      while (queue.length) {
+        const curr = queue.shift();
+        if (curr.x === end.x && curr.y === end.y) {
+          return prev;
+        }
+        for (const {dx, dy} of dirs) {
+          const nx = curr.x + dx;
+          const ny = curr.y + dy;
+          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+            if (!visited[ny][nx] && grid[ny][nx]) {
+              visited[ny][nx] = true;
+              prev[ny][nx] = curr;
+              queue.push({ x: nx, y: ny });
+            }
+          }
+        }
+      }
+      return null; // No path found.
+    }
+
+    // Draw the path on the canvas in red using a thicker line.
+    function drawPath(path) {
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
+      }
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 3; // Adjust line width here for a thicker red line.
+      ctx.stroke();
+      instructions.textContent = "Path found and drawn in red.";
+    }
+  </script>
+</body>
+</html>
