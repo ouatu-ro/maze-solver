@@ -59,7 +59,7 @@ h1 {
   background: #2a2a2a;
   border-radius: 4px;
 }
-@media (pointer: coarse) and (max-width: 768px) {
+@media (max-width: 768px) {
   .gallery::after {
     content: "Scroll →";
     position: absolute;
@@ -74,7 +74,7 @@ h1 {
     font-weight: bold;
     pointer-events: none;
     opacity: 0;
-    animation: fade-in-out 3s 1.5s forwards;
+    animation: fade-in-out 3s 0.5s forwards;
   }
 }
 @keyframes fade-in-out {
@@ -101,11 +101,13 @@ h1 {
     border-color 0.12s ease;
   isolation: isolate;
   min-width: 240px;
+  width: 240px;
   scroll-snap-align: start;
 }
 @media (max-width: 768px) {
   .card {
-    min-width: 180px;
+    min-width: 240px;
+    width: 240px;
   }
 }
 .card:hover {
