@@ -1,0 +1,323 @@
+:root {
+  --bg: #121212;
+  --surface: #1b1b1b;
+  --surface-2: #232323;
+  --text: #f6f6f6;
+  --muted: #b6b6b6;
+  --brand: #4caf50;
+  --brand-2: #82e283;
+  --danger: #ff5252;
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --maxw: 960px;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  padding: 16px;
+  color: var(--text);
+  background: radial-gradient(
+    1200px 600px at 30% -10%,
+    #1e1e1e 0,
+    var(--bg) 60%
+  );
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+h1 {
+  font-size: 28px;
+  margin: 0 0 6px;
+  letter-spacing: 0.3px;
+}
+.sub {
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+.gallery {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px 4px 16px 4px;
+  margin: 6px 0;
+  scroll-snap-type: x mandatory;
+  position: relative;
+}
+.gallery::-webkit-scrollbar {
+  height: 8px;
+}
+.gallery::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+@media (pointer: coarse) and (max-width: 768px) {
+  .gallery::after {
+    content: "Scroll →";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: bold;
+    pointer-events: none;
+    opacity: 0;
+    animation: fade-in-out 3s 1.5s forwards;
+  }
+}
+@keyframes fade-in-out {
+  0% {
+    opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid #2a2a2a;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease,
+    border-color 0.12s ease;
+  isolation: isolate;
+  min-width: 240px;
+  scroll-snap-align: start;
+}
+@media (max-width: 768px) {
+  .card {
+    min-width: 180px;
+  }
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  border-color: #3a3a3a;
+}
+.card.selected {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35) inset,
+    0 14px 34px rgba(0, 0, 0, 0.5);
+}
+.card .label {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  line-height: 1.4;
+}
+.card .label small {
+  display: block;
+  font-weight: normal;
+  color: var(--muted);
+  font-size: 11px;
+}
+.thumb {
+  width: 100%;
+  aspect-ratio: 4/3;
+  display: block;
+  object-fit: cover;
+  background: #222;
+}
+.cassette {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4/3;
+  background: linear-gradient(#2b2b2b, #272727);
+  border: 2px dashed #3c3c3c;
+  color: #ddd;
+}
+.cassette .plus {
+  font-size: 42px;
+  line-height: 1;
+}
+.cassette small {
+  display: block;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  margin-bottom: 10px;
+}
+button {
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  border: 1px solid #2e2e2e;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+button:hover {
+  background: #2a2a2a;
+}
+button.active {
+  background: var(--brand);
+  border-color: var(--brand-2);
+}
+.btn-ghost {
+  background: transparent;
+  border-color: #2a2a2a;
+  color: var(--muted);
+}
+.banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.status {
+  color: var(--muted);
+  font-size: 14px;
+}
+.status strong {
+  color: var(--brand-2);
+}
+.pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid #2e2e2e;
+}
+.stage {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #0e0e0e;
+  border: 1px solid #2a2a2a;
+  box-shadow: var(--shadow);
+}
+canvas {
+  display: none;
+  background: #fff;
+  image-rendering: pixelated;
+  width: 100%;
+  height: auto;
+}
+canvas.visible {
+  display: block;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.overlay.show {
+  opacity: 1;
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #222;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.initial-prompt {
+  text-align: center;
+  padding: 40px 20px;
+}
+.initial-prompt h2 {
+  margin: 0 0 8px;
+  color: var(--brand-2);
+}
+#start-drawing-btn {
+  background: var(--brand);
+  border-color: var(--brand-2);
+  margin-top: 16px;
+  font-weight: 600;
+}
+.drawing-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+}
+.drawing-tool-group label {
+  font-size: 12px;
+  margin-left: 4px;
+  color: var(--muted);
+}
+
+.floating-message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 6px 12px;
+  background: rgba(255, 82, 82, 0.9); /* --danger with alpha */
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  pointer-events: none;
+  animation: float-up 1.5s ease-out forwards;
+  z-index: 10;
+}
+@keyframes float-up {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+}
