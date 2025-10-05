@@ -15,12 +15,13 @@ export function rasterToGrid(imageData, threshold) {
 }
 
 export function bfs(grid, start, end) {
-  const H = grid.length,
-    W = grid[0].length;
-  const prev = Array.from({ length: H }, () => Array(W).fill(null));
-  const seen = Array.from({ length: H }, () => Array(W).fill(false));
+  const height = grid.length;
+  const width = grid[0].length;
+  const prev = Array.from({ length: height }, () => Array(width).fill(null));
+  const seen = Array.from({ length: height }, () => Array(width).fill(false));
+  const queue = [start];
   let visited = 0;
-  const q = [start];
+
   seen[start.y][start.x] = true;
   visited++;
 
@@ -31,28 +32,36 @@ export function bfs(grid, start, end) {
     [-1, 0],
   ];
 
-  while (q.length) {
-    const cur = q.shift();
-    if (cur.x === end.x && cur.y === end.y) {
-      return { prev, visited };
+  while (queue.length) {
+    const current = queue.shift();
+    if (current.x === end.x && current.y === end.y) {
+      const path = [];
+      let node = current;
+      while (node) {
+        path.push(node);
+        node = prev[node.y][node.x];
+      }
+      return { path: path.reverse(), visited };
     }
+
     for (const [dx, dy] of dirs) {
-      const nx = cur.x + dx,
-        ny = cur.y + dy;
+      const nx = current.x + dx;
+      const ny = current.y + dy;
       if (
         nx >= 0 &&
-        nx < W &&
+        nx < width &&
         ny >= 0 &&
-        ny < H &&
+        ny < height &&
         !seen[ny][nx] &&
         grid[ny][nx]
       ) {
         seen[ny][nx] = true;
         visited++;
-        prev[ny][nx] = cur;
-        q.push({ x: nx, y: ny });
+        prev[ny][nx] = current;
+        queue.push({ x: nx, y: ny });
       }
     }
   }
-  return { prev: null, visited };
+
+  return { path: null, visited };
 }

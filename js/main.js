@@ -1,4 +1,6 @@
-// --- DOM Elements ---
+import { rasterToGrid, bfs } from "./mazeSolver.js";
+import { THRESHOLD } from "./config.js";
+
 const fileInput = document.getElementById("fileInput");
 const canvas = document.getElementById("mazeCanvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -11,7 +13,6 @@ const stageEl = document.getElementById("stage");
 const initialPromptEl = document.getElementById("initial-prompt");
 const startDrawingBtn = document.getElementById("start-drawing-btn");
 
-// --- State ---
 const mazeState = {
   mode: "idle", // idle, solving, drawing
   grid: null,
@@ -24,16 +25,15 @@ const mazeState = {
   loadedImage: null,
   drawColor: "black",
   brushSize: 10,
+  drawTool: "brush",
   isDrawing: false,
   lastDrawPoint: null,
 };
 
-// --- Initialization ---
 addEventListeners();
 updateControls();
 removeSkeletonOnLoad();
 
-// --- Event Listeners ---
 function addEventListeners() {
   fileInput.addEventListener("change", handleFileUpload);
   galleryEl.addEventListener("click", handleGalleryClick);
@@ -49,9 +49,17 @@ function addEventListeners() {
   window.addEventListener("resize", () => render());
 }
 
-// --- Mode & UI Management ---
 function setMode(newMode) {
+  if (mazeState.mode === newMode) {
+    mazeState.isDrawing = false;
+    mazeState.lastDrawPoint = null;
+    updateControls();
+    updateUI();
+    return;
+  }
   mazeState.mode = newMode;
+  mazeState.isDrawing = false;
+  mazeState.lastDrawPoint = null;
   resetPoints(false);
   updateControls();
   updateUI();
@@ -61,19 +69,42 @@ function updateUI() {
   const hasImage = !!mazeState.loadedImage;
   initialPromptEl.style.display = hasImage ? "none" : "block";
   canvas.classList.toggle("visible", hasImage);
-  canvas.style.cursor = mazeState.mode === "drawing" ? "crosshair" : "pointer";
+  if (mazeState.mode === "drawing") {
+    canvas.style.cursor =
+      mazeState.drawTool === "brush"
+        ? "crosshair"
+        : mazeState.drawTool === "pan"
+        ? "grab"
+        : "crosshair";
+  } else {
+    canvas.style.cursor = "pointer";
+  }
+  stageEl.classList.toggle("solve", mazeState.mode === "solving");
+  stageEl.classList.toggle("draw", mazeState.mode === "drawing");
 }
 
 function updateControls() {
+  controlsEl.classList.toggle("is-collapsed", mazeState.mode !== "drawing");
   controlsEl.innerHTML = "";
-  if (mazeState.mode === "idle") return;
 
-  const toggleModeBtn = document.createElement("button");
-  toggleModeBtn.textContent =
-    mazeState.mode === "solving" ? "Edit Maze (Draw)" : "Find Path (Solve)";
-  toggleModeBtn.onclick = () =>
-    setMode(mazeState.mode === "solving" ? "drawing" : "solving");
-  controlsEl.appendChild(toggleModeBtn);
+  if (mazeState.mode === "idle") {
+    return;
+  }
+
+  const modeWrap = document.createElement("div");
+  modeWrap.className = "segmented";
+  ["solving", "drawing"].forEach((m) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = m === "solving" ? "Solve" : "Draw";
+    btn.className = "segmented__btn";
+    if (m === mazeState.mode) {
+      btn.classList.add("active");
+    }
+    btn.onclick = () => setMode(m);
+    modeWrap.appendChild(btn);
+  });
+  controlsEl.appendChild(modeWrap);
 
   if (mazeState.mode === "solving") {
     if (mazeState.startPoint) {
@@ -86,38 +117,70 @@ function updateControls() {
   } else if (mazeState.mode === "drawing") {
     const group = document.createElement("div");
     group.className = "drawing-tool-group";
+
+    const row = document.createElement("div");
+    row.className = "drawing-tools-row";
+
+    const panBtn = document.createElement("button");
+    panBtn.textContent = "Pan/Scroll";
+    panBtn.className = mazeState.drawTool === "pan" ? "active" : "";
+    panBtn.onclick = () => {
+      mazeState.drawTool = "pan";
+      updateControls();
+      updateUI();
+    };
+
     const brushBtn = document.createElement("button");
     brushBtn.textContent = "Wall (Black)";
-    brushBtn.className = mazeState.drawColor === "black" ? "active" : "";
+    brushBtn.className =
+      mazeState.drawTool === "brush" && mazeState.drawColor === "black"
+        ? "active"
+        : "";
     brushBtn.onclick = () => {
+      mazeState.drawTool = "brush";
       mazeState.drawColor = "black";
       updateControls();
+      updateUI();
     };
+
     const eraserBtn = document.createElement("button");
     eraserBtn.textContent = "Path (White)";
-    eraserBtn.className = mazeState.drawColor === "white" ? "active" : "";
+    eraserBtn.className =
+      mazeState.drawTool === "brush" && mazeState.drawColor === "white"
+        ? "active"
+        : "";
     eraserBtn.onclick = () => {
+      mazeState.drawTool = "brush";
       mazeState.drawColor = "white";
       updateControls();
+      updateUI();
     };
+
+    row.append(panBtn, brushBtn, eraserBtn);
+
+    const sizeControl = document.createElement("div");
+    sizeControl.className = "size-control";
+    sizeControl.classList.toggle("is-disabled", mazeState.drawTool !== "brush");
+
     const sizeLabel = document.createElement("label");
     sizeLabel.htmlFor = "brush-size";
     sizeLabel.textContent = "Size:";
+
     const sizeSlider = document.createElement("input");
     sizeSlider.type = "range";
     sizeSlider.id = "brush-size";
     sizeSlider.min = 1;
     sizeSlider.max = 50;
     sizeSlider.value = mazeState.brushSize;
-    sizeSlider.oninput = (e) => {
-      mazeState.brushSize = parseInt(e.target.value);
-    };
-    group.append(brushBtn, eraserBtn, sizeLabel, sizeSlider);
+    sizeSlider.oninput = (e) =>
+      (mazeState.brushSize = parseInt(e.target.value));
+
+    sizeControl.append(sizeLabel, sizeSlider);
+
+    group.append(row, sizeControl);
     controlsEl.appendChild(group);
   }
 }
-
-// --- Image & Canvas Handling ---
 
 function handleGalleryClick(event) {
   const card = event.target.closest(".card[data-fullsrc]");
@@ -201,52 +264,56 @@ function processImageIntoGrid() {
     mazeState.originalWidth,
     mazeState.originalHeight
   );
-  const data = imageData.data;
-  const threshold = 128;
-  mazeState.grid = [];
-  for (let y = 0; y < mazeState.originalHeight; y++) {
-    mazeState.grid[y] = [];
-    for (let x = 0; x < mazeState.originalWidth; x++) {
-      const index = (y * mazeState.originalWidth + x) * 4;
-      const gray = (data[index] + data[index + 1] + data[index + 2]) / 3;
-      mazeState.grid[y][x] = gray > threshold;
+  mazeState.grid = rasterToGrid(imageData, THRESHOLD);
+}
+
+function handleMouseDown(event) {
+  if (mazeState.mode === "solving") {
+    event.preventDefault();
+    onCanvasClick(event);
+  } else if (mazeState.mode === "drawing") {
+    if (mazeState.drawTool === "brush") {
+      event.preventDefault();
+      mazeState.isDrawing = true;
+      const { viewX, viewY } = getCanvasCoordinates(event);
+      mazeState.lastDrawPoint = { x: viewX, y: viewY };
+      drawOnCanvas(event);
+    } else if (mazeState.drawTool === "pan") {
+      mazeState.isDrawing = false;
+      mazeState.lastDrawPoint = null;
+      canvas.style.cursor = "grabbing";
     }
   }
 }
 
-// --- Main Event Handlers (Mouse Down/Move/Up) ---
-
-function handleMouseDown(event) {
-  event.preventDefault();
-  if (mazeState.mode === "solving") {
-    onCanvasClick(event);
-  } else if (mazeState.mode === "drawing") {
-    mazeState.isDrawing = true;
-    const { viewX, viewY } = getCanvasCoordinates(event);
-    mazeState.lastDrawPoint = { x: viewX, y: viewY };
-    drawOnCanvas(event);
-  }
-}
-
 function handleMouseMove(event) {
-  event.preventDefault();
-  if (mazeState.mode === "drawing" && mazeState.isDrawing) {
+  if (
+    mazeState.mode === "drawing" &&
+    mazeState.drawTool === "brush" &&
+    mazeState.isDrawing
+  ) {
+    event.preventDefault();
     drawOnCanvas(event);
   }
 }
 
 function handleMouseUp() {
-  if (mazeState.mode === "drawing" && mazeState.isDrawing) {
-    mazeState.isDrawing = false;
-    mazeState.lastDrawPoint = null;
-    mazeState.loadedImage.src = canvas.toDataURL();
-    mazeState.loadedImage.onload = () => {
-      processImageIntoGrid();
-    };
+  if (mazeState.mode === "drawing") {
+    if (mazeState.drawTool === "brush" && mazeState.isDrawing) {
+      mazeState.isDrawing = false;
+      mazeState.lastDrawPoint = null;
+      if (mazeState.loadedImage) {
+        mazeState.loadedImage.src = canvas.toDataURL();
+        mazeState.loadedImage.onload = () => {
+          processImageIntoGrid();
+        };
+      }
+    }
+    if (mazeState.drawTool === "pan") {
+      canvas.style.cursor = "grab";
+    }
   }
 }
-
-// --- Core Logic (Solving and Drawing) ---
 
 function onCanvasClick(event) {
   if (!mazeState.grid) return;
@@ -279,6 +346,7 @@ function onCanvasClick(event) {
 }
 
 function drawOnCanvas(event) {
+  if (mazeState.drawTool !== "brush") return;
   const { viewX, viewY } = getCanvasCoordinates(event);
   ctx.beginPath();
   ctx.lineWidth = mazeState.brushSize / mazeState.scaleFactor;
@@ -337,7 +405,6 @@ function solveMaze() {
   }, 50);
 }
 
-// --- Drawing & Rendering ---
 function render() {
   if (!mazeState.loadedImage) {
     updateUI();
@@ -391,7 +458,6 @@ function drawPath(path) {
   ctx.stroke();
 }
 
-// --- Helper Functions ---
 function getPointerEvent(event) {
   return event.touches && event.touches.length > 0 ? event.touches[0] : event;
 }
@@ -429,53 +495,6 @@ function removeSkeletonOnLoad() {
       });
     }
   });
-}
-
-function bfs(grid, start, end) {
-  const width = grid[0].length;
-  const height = grid.length;
-  let visitedCount = 0;
-  const queue = [start];
-  const visited = new Set([`${start.y},${start.x}`]);
-  visitedCount++;
-  const prev = new Map();
-  const dirs = [
-    [0, -1],
-    [1, 0],
-    [0, 1],
-    [-1, 0],
-  ];
-  while (queue.length) {
-    const current = queue.shift();
-    if (current.x === end.x && current.y === end.y) {
-      const path = [];
-      let at = end;
-      while (at) {
-        path.push(at);
-        at = prev.get(`${at.y},${at.x}`);
-      }
-      return { path: path.reverse(), visited: visitedCount };
-    }
-    for (const [dx, dy] of dirs) {
-      const nextX = current.x + dx;
-      const nextY = current.y + dy;
-      const key = `${nextY},${nextX}`;
-      if (
-        nextX >= 0 &&
-        nextX < width &&
-        nextY >= 0 &&
-        nextY < height &&
-        grid[nextY][nextX] &&
-        !visited.has(key)
-      ) {
-        visited.add(key);
-        visitedCount++;
-        prev.set(key, current);
-        queue.push({ x: nextX, y: nextY });
-      }
-    }
-  }
-  return { path: null, visited: visitedCount };
 }
 
 function getCanvasCoordinates(event) {

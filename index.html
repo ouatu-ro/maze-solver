@@ -23,28 +23,42 @@
             <small>Tap / Click to select</small>
           </div>
         </label>
+
         <button
           class="card"
-          data-fullsrc="vsauce-maze.png"
+          data-fullsrc="vsauce-maze.webp"
           aria-label="Open Vsauce maze"
         >
-          <img
-            class="thumb skeleton"
-            src="vsauce-maze.png"
-            alt="Vsauce maze preview"
-          />
+          <picture>
+            <source srcset="vsauce-maze.thumb.webp" type="image/webp" />
+            <img
+              class="thumb skeleton"
+              src="vsauce-maze.png"
+              alt="Preview of a complex, circular Vsauce maze"
+              width="240"
+              height="180"
+              fetchpriority="high"
+            />
+          </picture>
           <span class="label">Vsauce Maze <small>Tap to select</small></span>
         </button>
+
         <button
           class="card"
-          data-fullsrc="newspaper-maze.png"
+          data-fullsrc="newspaper-maze.webp"
           aria-label="Open newspaper maze"
         >
-          <img
-            class="thumb skeleton"
-            src="newspaper-maze.png"
-            alt="Newspaper maze preview"
-          />
+          <picture>
+            <source srcset="newspaper-maze.thumb.webp" type="image/webp" />
+            <img
+              class="thumb skeleton"
+              src="newspaper-maze.png"
+              alt="Preview of a difficult, high-density newspaper maze"
+              width="240"
+              height="180"
+              fetchpriority="high"
+            />
+          </picture>
           <span class="label">Newspaper Maze <small>Tap to select</small></span>
         </button>
       </div>
