@@ -38,10 +38,14 @@ function addEventListeners() {
   fileInput.addEventListener("change", handleFileUpload);
   galleryEl.addEventListener("click", handleGalleryClick);
   startDrawingBtn.addEventListener("click", handleStartDrawing);
+
   canvas.addEventListener("mousedown", handleMouseDown);
   canvas.addEventListener("mousemove", handleMouseMove);
   canvas.addEventListener("mouseup", handleMouseUp);
   canvas.addEventListener("mouseleave", handleMouseUp);
+  canvas.addEventListener("touchstart", handleMouseDown, { passive: false });
+  canvas.addEventListener("touchmove", handleMouseMove, { passive: false });
+  canvas.addEventListener("touchend", handleMouseUp);
   window.addEventListener("resize", () => render());
 }
 
@@ -225,6 +229,7 @@ function handleMouseDown(event) {
 }
 
 function handleMouseMove(event) {
+  event.preventDefault();
   if (mazeState.mode === "drawing" && mazeState.isDrawing) {
     drawOnCanvas(event);
   }
@@ -246,8 +251,16 @@ function handleMouseUp() {
 function onCanvasClick(event) {
   if (!mazeState.grid) return;
   const { dataX, dataY } = getCanvasCoordinates(event);
+  const pointer = getPointerEvent(event);
+
   if (!mazeState.grid[dataY]?.[dataX]) {
-    showFloatingMessage("That's a wall!", event.clientX, event.clientY);
+    showFloatingMessage(
+      "🧱 That's a wall!",
+      pointer.clientX,
+      pointer.clientY,
+      "wall"
+    );
+
     return;
   }
   if (!mazeState.startPoint) {
@@ -302,10 +315,21 @@ function solveMaze() {
       setStats(`${path.length} steps · ${visited} visited · ${ms}ms`);
     } else {
       mazeState.path = null;
-      setStatus(
-        `<span style="color: var(--danger);">No path found!</span> Try different points.`
-      );
+      setStatus(`<span>🚫 No path found!</span> Try different points.`);
+
       setStats(`${visited} visited · ${ms}ms`);
+      // Display the fading message on the canvas
+      if (mazeState.endPoint) {
+        const rect = canvas.getBoundingClientRect();
+        const viewX = mazeState.endPoint.x / mazeState.scaleFactor;
+        const viewY = mazeState.endPoint.y / mazeState.scaleFactor;
+        showFloatingMessage(
+          "🚫 No path found!",
+          viewX + rect.left,
+          viewY + rect.top,
+          "nopath"
+        );
+      }
     }
     render();
     updateControls();
@@ -368,6 +392,10 @@ function drawPath(path) {
 }
 
 // --- Helper Functions ---
+function getPointerEvent(event) {
+  return event.touches && event.touches.length > 0 ? event.touches[0] : event;
+}
+
 function setStatus(html) {
   statusEl.innerHTML = html;
 }
@@ -451,22 +479,45 @@ function bfs(grid, start, end) {
 }
 
 function getCanvasCoordinates(event) {
+  const pointer = getPointerEvent(event);
   const rect = canvas.getBoundingClientRect();
-  const viewX = event.clientX - rect.left;
-  const viewY = event.clientY - rect.top;
+  const viewX = pointer.clientX - rect.left;
+  const viewY = pointer.clientY - rect.top;
   const dataX = Math.floor(viewX * mazeState.scaleFactor);
   const dataY = Math.floor(viewY * mazeState.scaleFactor);
   return { viewX, viewY, dataX, dataY };
 }
 
-function showFloatingMessage(text, x, y) {
+function showFloatingMessage(text, x, y, type = "wall") {
   const msg = document.createElement("div");
-  msg.className = "floating-message";
-  msg.textContent = text;
+  msg.className = `floating-message floating-message--${type}`;
+  msg.innerHTML = text;
+  msg.style.visibility = "hidden";
   document.body.appendChild(msg);
-  msg.style.left = `${x - msg.offsetWidth / 2}px`;
-  msg.style.top = `${y - msg.offsetHeight - 10}px`;
+
+  const msgWidth = msg.offsetWidth;
+  const margin = 16;
+
+  const halfWidth = msgWidth / 2;
+  let leftPos = x;
+
+  if (leftPos - halfWidth < margin) {
+    leftPos = halfWidth + margin;
+  } else if (leftPos + halfWidth > window.innerWidth - margin) {
+    leftPos = window.innerWidth - halfWidth - margin;
+  }
+
+  const msgHeight = 40;
+  const topMargin = 20;
+  const direction = y - msgHeight - topMargin < 0 ? 1 : -1;
+  msg.style.setProperty("--direction", direction);
+
+  msg.style.left = `${leftPos}px`;
+  msg.style.top = `${y}px`;
+
+  msg.style.visibility = "visible";
+
   setTimeout(() => {
     msg.remove();
-  }, 1500);
+  }, 1800);
 }

@@ -66,7 +66,7 @@ h1 {
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--brand);
     color: #fff;
     padding: 4px 8px;
     border-radius: 99px;
@@ -79,6 +79,9 @@ h1 {
 }
 @keyframes fade-in-out {
   0% {
+    opacity: 0;
+  }
+  50% {
     opacity: 0;
   }
   25%,
@@ -198,6 +201,10 @@ button.active {
   align-items: center;
   gap: 8px;
   margin: 8px 0;
+  max-height: calc(2 * 1.2em);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .status {
   color: var(--muted);
@@ -236,9 +243,9 @@ canvas.visible {
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
-  font-weight: 600;
+  color: #000000;
+  font-weight: 1000;
+  font-size: 2rem;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
@@ -293,6 +300,7 @@ canvas.visible {
   border-radius: 8px;
   border: 1px solid #2a2a2a;
 }
+
 .drawing-tool-group label {
   font-size: 12px;
   margin-left: 4px;
@@ -301,25 +309,40 @@ canvas.visible {
 
 .floating-message {
   position: absolute;
-  top: 0;
-  left: 0;
-  padding: 6px 12px;
-  background: rgba(255, 82, 82, 0.9); /* --danger with alpha */
-  color: white;
-  font-weight: 600;
+  padding: 8px 14px;
+  font-weight: 700;
   font-size: 14px;
   border-radius: 8px;
   pointer-events: none;
-  animation: float-up 1.5s ease-out forwards;
-  z-index: 10;
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+
+  animation: float-up-and-fade 1.8s ease-out forwards;
 }
-@keyframes float-up {
-  0% {
-    transform: translateY(0);
+
+.floating-message--wall {
+  background: rgba(255, 82, 82, 0.95);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.floating-message--nopath {
+  background: #ffb300;
+  color: #121212;
+  border: 1px solid #ffe082;
+}
+
+@keyframes float-up-and-fade {
+  from {
+    transform: translate(-50%, -120%);
     opacity: 1;
   }
-  100% {
-    transform: translateY(-50px);
+  to {
+    transform: translate(-50%, -220%);
     opacity: 0;
   }
 }
