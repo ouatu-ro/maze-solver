@@ -27,8 +27,17 @@ body {
     #1e1e1e 0,
     var(--bg) 60%
   );
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
 }
 .wrap {
   max-width: var(--maxw);
@@ -98,7 +107,9 @@ h1 {
   border: 1px solid #2a2a2a;
   box-shadow: var(--shadow);
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease,
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
     border-color 0.12s ease;
   isolation: isolate;
   min-width: 240px;
@@ -118,7 +129,8 @@ h1 {
 }
 .card.selected {
   border-color: var(--brand);
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35) inset,
+  box-shadow:
+    0 0 0 2px rgba(76, 175, 80, 0.35) inset,
     0 14px 34px rgba(0, 0, 0, 0.5);
 }
 .card .label {
@@ -169,7 +181,9 @@ h1 {
   gap: 10px;
   align-items: start;
   overflow: hidden;
-  transition: max-height 0.35s ease-out, margin-bottom 0.35s ease-out;
+  transition:
+    max-height 0.35s ease-out,
+    margin-bottom 0.35s ease-out;
   max-height: 500px;
   margin-bottom: 10px;
 }
@@ -199,7 +213,9 @@ h1 {
   font-weight: 600;
   padding: 6px 14px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .segmented__btn.active {
   background: var(--brand);
